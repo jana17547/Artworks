@@ -1,0 +1,158 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  Artist       Artist?
+  Transactions Transaction[]
+  BidHistory   BidHistory[]
+  ShoppingCart ShoppingCart?
+   Notifications Notification[]
+}
+
+model Artist {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  biography String?  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id])
+  Artworks Artwork[]
+}
+
+model Artwork {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  price       Float
+  categoryId  Int?      
+  imageUrl    String?
+  status      Status    @default(AVAILABLE)
+  artistId    Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  artist      Artist   @relation(fields: [artistId], references: [id])
+  category    Category? @relation(fields: [categoryId], references: [id]) 
+  Transactions Transaction[]
+  Bids         Bid[]
+  CartItems    CartItem[]
+   Notifications Notification[]
+
+  @@index([artistId])
+  @@index([categoryId])
+  @@index([price])
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  Artworks    Artwork[]
+}
+
+model Transaction {
+  id              Int       @id @default(autoincrement())
+  buyerId         Int
+  artworkId       Int
+  amount          Float
+  transactionDate DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  buyer    User    @relation(fields: [buyerId], references: [id])
+  artwork  Artwork @relation(fields: [artworkId], references: [id])
+}
+
+model Bid {
+  id          Int      @id @default(autoincrement())
+  artworkId   Int
+  startingPrice Float
+  currentPrice Float?
+  endDate     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  artwork    Artwork   @relation(fields: [artworkId], references: [id])
+  BidHistory BidHistory[]
+}
+
+model BidHistory {
+  id        Int      @id @default(autoincrement())
+  bidId     Int
+  userId    Int
+  bidAmount Float
+  bidTime   DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bid       Bid      @relation(fields: [bidId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model ShoppingCart {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+  CartItems CartItem[]
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cartId    Int
+  artworkId Int
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  cart      ShoppingCart @relation(fields: [cartId], references: [id])
+  artwork   Artwork      @relation(fields: [artworkId], references: [id])
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  artworkId   Int
+  message     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+  artwork     Artwork  @relation(fields: [artworkId], references: [id])
+}
+
+enum Role {
+  ARTIST
+  BUYER
+  ADMIN
+}
+
+enum Status {
+  AVAILABLE
+  SOLD
+  UNSOLD
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}

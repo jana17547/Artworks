@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `artwork` MODIFY `status` ENUM('AVAILABLE', 'SOLD', 'UNSOLD') NOT NULL DEFAULT 'AVAILABLE';
